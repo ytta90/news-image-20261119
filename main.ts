@@ -17,9 +17,15 @@
 // Run it outside the grader's container with:
 //   mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts
 
-import { copyFileSync, mkdirSync } from 'node:fs';
+import { copyFileSync, mkdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
 const outDir = process.env.MAKEFUN_OUTPUT_DIR ?? '/output';
 mkdirSync(outDir, { recursive: true });
-copyFileSync(new URL('./entry.png', import.meta.url), join(outDir, 'entry.png'));
+const outPath = join(outDir, 'entry.png');
+copyFileSync(new URL('./entry.png', import.meta.url), outPath);
+// Guard against a truncated or empty copy: the gate refuses a file
+// that is not a whole image, so fail loudly instead of shipping one.
+if (statSync(outPath).size === 0) {
+  throw new Error('entry.png copied empty');
+}
